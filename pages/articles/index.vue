@@ -56,6 +56,8 @@ const {
   () => fetchArticles(requestParams.value),
   {
     watch: [requestParams],
+    server: true,
+    lazy: false,
   }
 )
 
@@ -78,6 +80,16 @@ function onPageSizeChange(event: Event) {
 function goToPage(page: number) {
   void updateQuery({ page })
 }
+
+useHead({
+  title: 'Articles',
+  meta: [
+    {
+      name: 'description',
+      content: 'Search and explore articles.',
+    },
+  ],
+})
 </script>
 
 <template>

@@ -51,8 +51,14 @@ export function useArticlesApi() {
     return await $fetch<Post[]>('https://jsonplaceholder.typicode.com/posts')
   }
 
+  let cachedUsers: User[] | null = null
+
   async function fetchUsers(): Promise<User[]> {
-    return await $fetch<User[]>('https://jsonplaceholder.typicode.com/users')
+    if (cachedUsers) return cachedUsers
+    cachedUsers = await $fetch<User[]>(
+      'https://jsonplaceholder.typicode.com/users'
+    )
+    return cachedUsers
   }
 
   async function fetchArticles(params: FetchArticlesParams): Promise<ArticlesListResult> {

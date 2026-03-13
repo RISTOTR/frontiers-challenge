@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import RelatedArticles from '~/components/articles/RelatedArticles.vue'
+
 const route = useRoute()
 const id = Number(route.params.id)
 
@@ -65,25 +67,11 @@ useHead({
       </NuxtLink>
     </nav>
 
-    <section
-      v-if="related?.length"
-      aria-labelledby="related-articles-title"
-    >
-      <h2 id="related-articles-title">Related articles</h2>
-
-      <ul class="related-list">
-        <li v-for="item in related" :key="item.id">
-          <NuxtLink
-            :to="{
-              path: `/articles/${item.id}`,
-              query: route.query,
-            }"
-          >
-            {{ item.title }}
-          </NuxtLink>
-        </li>
-      </ul>
-    </section>
+    <RelatedArticles
+      v-if="related"
+      :related="related"
+      :query="route.query"
+    />
   </main>
 </template>
 
