@@ -36,6 +36,16 @@ function mapArticles(posts: Post[], users: User[]): Article[] {
   }))
 }
 
+function mapArticleListItem(article: Article): ArticleListItem {
+  return {
+    id: article.id,
+    title: article.title,
+    excerpt: toExcerpt(article.body),
+    authorId: article.authorId,
+    authorName: article.authorName,
+  }
+}
+
 export function useArticlesApi() {
   async function fetchPosts(): Promise<Post[]> {
     return await $fetch<Post[]>('https://jsonplaceholder.typicode.com/posts')
@@ -74,13 +84,7 @@ export function useArticlesApi() {
     const start = (page - 1) * safePageSize
     const end = start + safePageSize
 
-    const items: ArticleListItem[] = filtered.slice(start, end).map((article) => ({
-      id: article.id,
-      title: article.title,
-      excerpt: toExcerpt(article.body),
-      authorId: article.authorId,
-      authorName: article.authorName,
-    }))
+    const items = filtered.slice(start, end).map(mapArticleListItem)
 
     return {
       items,
@@ -117,14 +121,8 @@ export function useArticlesApi() {
       .filter((item) => item.authorId === article.authorId && item.id !== article.id)
       .sort((a, b) => a.id - b.id)
       .slice(0, limit)
-      .map((item) => ({
-        id: item.id,
-        title: item.title,
-        excerpt: toExcerpt(item.body),
-        authorId: item.authorId,
-        authorName: item.authorName,
-      }))
-  }
+      .map(mapArticleListItem)
+      }
 
   return {
     fetchArticles,

@@ -19,7 +19,10 @@ watch(
 )
 
 const debouncedSearch = useDebounceFn(async (value: string) => {
-  await updateQuery({ q: value }, { resetPage: true })
+  await updateQuery(
+  { q: value },
+  { resetPage: true, replace: true }
+)
 }, 350)
 
 watch(searchInput, (value) => {
@@ -28,15 +31,28 @@ watch(searchInput, (value) => {
   }
 })
 
+const requestParams = computed(() => ({
+  q: queryState.value.q,
+  author: queryState.value.author,
+  page: queryState.value.page,
+  pageSize: queryState.value.pageSize,
+}))
+
+const asyncKey = computed(
+  () =>
+    `articles:${requestParams.value.q}:${requestParams.value.author}:${requestParams.value.page}:${requestParams.value.pageSize}`
+)
+
 const { data, pending, error } = await useAsyncData(
-  () => fetchArticles(queryState.value),
+  asyncKey,
+  () => fetchArticles(requestParams.value),
   {
-    watch: [queryState],
+    watch: [requestParams],
   }
 )
 
 function goToPage(page: number) {
-  updateQuery({ page })
+  updateQuery({ page: page })
 }
 </script>
 

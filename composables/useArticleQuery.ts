@@ -66,7 +66,7 @@ export function useArticleQuery() {
 
   async function updateQuery(
     patch: Partial<ArticleQueryState>,
-    options?: { resetPage?: boolean }
+    options?: { resetPage?: boolean; replace?: boolean }
   ) {
     const current = queryState.value
 
@@ -79,7 +79,9 @@ export function useArticleQuery() {
       next.page = DEFAULT_PAGE
     }
 
-    await router.push({
+    const navigation = options?.replace ? router.replace : router.push
+
+    await navigation({
       query: toArticleQuery(next),
     })
   }
