@@ -116,9 +116,9 @@ useHead({
         <p role="alert">Something went wrong while loading articles.</p>
       </template>
 
-      <template v-else-if="pending">
-        <p>Loading articles…</p>
-      </template>
+      <div v-if="pending" class="skeleton-list">
+        <div v-for="i in 5" :key="i" class="skeleton-card"></div>
+      </div>
 
       <template v-else-if="articlesResult">
         <p class="results-summary">
@@ -187,4 +187,12 @@ useHead({
 .results-summary {
   margin: 0;
 }
+
+.skeleton-card {
+  height: 60px;
+  background: #eee;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
 </style>

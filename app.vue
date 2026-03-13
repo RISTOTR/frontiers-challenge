@@ -26,6 +26,12 @@ a {
   text-decoration: none;
 }
 
+a:focus,
+button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
 a:hover {
   text-decoration: underline;
 }
