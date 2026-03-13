@@ -1,12 +1,22 @@
-import type { LocationQuery, LocationQueryRaw } from 'vue-router'
+import type {
+  LocationQuery,
+  LocationQueryRaw,
+  LocationQueryValue,
+} from 'vue-router'
 import type { ArticleQueryState } from '~/types/article'
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
 const ALLOWED_PAGE_SIZES = [5, 10, 20]
 
-function readSingle(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '')
+function readSingle(
+  value: LocationQueryValue | LocationQueryValue[] | undefined
+): string {
+  if (Array.isArray(value)) {
+    return value.find((item): item is string => typeof item === 'string') ?? ''
+  }
+
+  return typeof value === 'string' ? value : ''
 }
 
 function parsePositiveInt(value: string, fallback: number): number {
