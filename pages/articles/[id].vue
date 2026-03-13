@@ -1,7 +1,13 @@
 <script setup lang="ts">
 const route = useRoute()
-
 const id = Number(route.params.id)
+
+if (!Number.isInteger(id) || id <= 0) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Article not found',
+  })
+}
 
 const { fetchArticleById, fetchRelatedArticles } = useArticlesApi()
 
@@ -10,62 +16,67 @@ const { data: article } = await useAsyncData(
   () => fetchArticleById(id)
 )
 
-if (!article.value) {
+const articleValue = article.value
+
+if (!articleValue) {
   throw createError({
     statusCode: 404,
-    statusMessage: 'Article not found'
+    statusMessage: 'Article not found',
   })
 }
 
 const { data: related } = await useAsyncData(
   `related-${id}`,
-  () => fetchRelatedArticles(article.value!)
+  () => fetchRelatedArticles(articleValue)
 )
 
 useHead({
-  title: article.value.title,
+  title: articleValue.title,
   meta: [
     {
       name: 'description',
-      content: article.value.body.slice(0, 120)
-    }
-  ]
+      content: articleValue.body.replace(/\s+/g, ' ').trim().slice(0, 140),
+    },
+  ],
 })
 </script>
 
 <template>
   <main class="page">
-    <article v-if="article">
+    <article>
       <header>
-        <h1>{{ article.title }}</h1>
-        <p class="meta">By {{ article.authorName }}</p>
+        <h1>{{ articleValue.title }}</h1>
+        <p class="meta">By {{ articleValue.authorName }}</p>
       </header>
 
       <section class="body">
-        <p>{{ article.body }}</p>
+        <p>{{ articleValue.body }}</p>
       </section>
     </article>
 
-    <nav>
+    <nav class="back-nav" aria-label="Back navigation">
       <NuxtLink
         :to="{
           path: '/articles',
-          query: route.query
+          query: route.query,
         }"
       >
         ← Back to results
       </NuxtLink>
     </nav>
 
-    <section v-if="related?.length">
-      <h2>Related articles</h2>
+    <section
+      v-if="related?.length"
+      aria-labelledby="related-articles-title"
+    >
+      <h2 id="related-articles-title">Related articles</h2>
 
-      <ul>
+      <ul class="related-list">
         <li v-for="item in related" :key="item.id">
           <NuxtLink
             :to="{
               path: `/articles/${item.id}`,
-              query: route.query
+              query: route.query,
             }"
           >
             {{ item.title }}
@@ -92,11 +103,19 @@ useHead({
   line-height: 1.6;
 }
 
-nav {
+.back-nav {
   margin-top: 2rem;
 }
 
 section {
   margin-top: 2rem;
+}
+
+.related-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
 }
 </style>

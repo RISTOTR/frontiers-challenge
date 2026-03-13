@@ -20,9 +20,9 @@ watch(
 
 const debouncedSearch = useDebounceFn(async (value: string) => {
   await updateQuery(
-  { q: value },
-  { resetPage: true, replace: true }
-)
+    { q: value },
+    { resetPage: true, replace: true }
+  )
 }, 350)
 
 watch(searchInput, (value) => {
@@ -43,7 +43,11 @@ const asyncKey = computed(
     `articles:${requestParams.value.q}:${requestParams.value.author}:${requestParams.value.page}:${requestParams.value.pageSize}`
 )
 
-const { data, pending, error } = await useAsyncData(
+const {
+  data: articlesResult,
+  pending,
+  error,
+} = await useAsyncData(
   asyncKey,
   () => fetchArticles(requestParams.value),
   {
@@ -51,84 +55,159 @@ const { data, pending, error } = await useAsyncData(
   }
 )
 
+function onAuthorChange(event: Event) {
+  const target = event.target as HTMLSelectElement
+  void updateQuery(
+    { author: target.value },
+    { resetPage: true }
+  )
+}
+
+function onPageSizeChange(event: Event) {
+  const target = event.target as HTMLSelectElement
+  void updateQuery(
+    { pageSize: Number(target.value) },
+    { resetPage: true }
+  )
+}
+
 function goToPage(page: number) {
-  updateQuery({ page: page })
+  void updateQuery({ page })
 }
 </script>
 
 <template>
   <main class="page">
-    <header>
+    <header class="page__header">
       <h1>Articles</h1>
-      <p>Search and explore articles.</p>
+      <p class="page__intro">
+        Explore articles with server-side rendering, search, filtering, and pagination.
+      </p>
     </header>
 
-    <section>
-      <form @submit.prevent>
-        <label for="search">Search by title</label>
+    <section class="panel" aria-labelledby="filters-title">
+      <h2 id="filters-title" class="sr-only">Filter articles</h2>
 
-        <input
-          id="search"
-          v-model="searchInput"
-          type="search"
-          placeholder="Search articles"
-        >
+      <form class="filters" @submit.prevent>
+        <div class="field">
+          <label for="search">Search by title</label>
+          <input
+            id="search"
+            v-model="searchInput"
+            type="search"
+            name="search"
+            placeholder="Search articles"
+          >
+        </div>
+
+        <div class="field">
+          <label for="author">Author</label>
+          <select
+            id="author"
+            name="author"
+            :value="queryState.author"
+            @change="onAuthorChange"
+          >
+            <option value="">All authors</option>
+            <option
+              v-for="author in articlesResult?.authors ?? []"
+              :key="author.id"
+              :value="String(author.id)"
+            >
+              {{ author.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="pageSize">Results per page</label>
+          <select
+            id="pageSize"
+            name="pageSize"
+            :value="queryState.pageSize"
+            @change="onPageSizeChange"
+          >
+            <option
+              v-for="size in pageSizes"
+              :key="size"
+              :value="size"
+            >
+              {{ size }}
+            </option>
+          </select>
+        </div>
       </form>
     </section>
 
-    <section>
+    <section class="panel" aria-live="polite">
       <template v-if="error">
-        <p role="alert">Failed to load articles.</p>
+        <p role="alert">Something went wrong while loading articles.</p>
       </template>
 
       <template v-else-if="pending">
-        <p>Loading…</p>
+        <p>Loading articles…</p>
       </template>
 
-      <template v-else-if="data">
-        <ul>
-          <li
-            v-for="article in data.items"
-            :key="article.id"
-          >
-            <article>
-              <h2>
-                <NuxtLink
-                  :to="{
-                    path: `/articles/${article.id}`,
-                    query: route.query
-                  }"
-                >
-                  {{ article.title }}
-                </NuxtLink>
-              </h2>
+      <template v-else-if="articlesResult">
+        <p class="results-summary">
+          {{ articlesResult.total }} result<span v-if="articlesResult.total !== 1">s</span> found.
+        </p>
 
-              <p>By {{ article.authorName }}</p>
+        <template v-if="articlesResult.items.length === 0">
+          <p>No articles match your current filters.</p>
+        </template>
 
-              <p>{{ article.excerpt }}</p>
-            </article>
-          </li>
-        </ul>
+        <template v-else>
+          <section aria-label="Article results">
+            <ul class="articles">
+              <li
+                v-for="article in articlesResult.items"
+                :key="article.id"
+                class="article-card"
+              >
+                <article>
+                  <header>
+                    <h2>
+                      <NuxtLink
+                        :to="{
+                          path: `/articles/${article.id}`,
+                          query: route.query,
+                        }"
+                      >
+                        {{ article.title }}
+                      </NuxtLink>
+                    </h2>
+                    <p class="meta">By {{ article.authorName }}</p>
+                  </header>
 
-        <nav>
-          <button
-            :disabled="data.page <= 1"
-            @click="goToPage(data.page - 1)"
-          >
-            Previous
-          </button>
+                  <p>{{ article.excerpt }}</p>
+                </article>
+              </li>
+            </ul>
+          </section>
 
-          <span>
-            Page {{ data.page }} of {{ data.totalPages }}
-          </span>
+          <nav class="pagination" aria-label="Pagination">
+            <button
+              type="button"
+              :disabled="articlesResult.page <= 1"
+              @click="goToPage(articlesResult.page - 1)"
+            >
+              Previous
+            </button>
 
-          <button
-            :disabled="data.page >= data.totalPages"
-            @click="goToPage(data.page + 1)"
-          >
-            Next
-          </button>
-        </nav>
+            <span aria-current="page">
+              Page {{ articlesResult.page }} of {{ articlesResult.totalPages }}
+            </span>
+
+            <button
+              type="button"
+              :disabled="articlesResult.page >= articlesResult.totalPages"
+              @click="goToPage(articlesResult.page + 1)"
+            >
+              Next
+            </button>
+          </nav>
+        </template>
       </template>
     </section>
   </main>
