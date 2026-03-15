@@ -23,7 +23,7 @@ A SSR-first Nuxt 3 application demonstrating data fetching, TypeScript usage, an
    ```bash
    npm run dev
    ```
-   Open `http://localhost:3000` to view the app.
+   Open `http://localhost:3000/articles` to view the app.
 
 3. **Production Build**
    ```bash
